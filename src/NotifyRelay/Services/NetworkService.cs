@@ -294,10 +294,13 @@ public class NetworkService(
             logger.LogInformation($"收到 ACCEPT，配对码验证通过: {remoteUuid}");
 
             // 与安卓端及 core HANDSHAKE 重连逻辑对齐：用对端长期公钥做 ECDH 派生，覆盖 SPAKE2 协商密钥，
-            // 否则安卓端（ECDH 密钥）与 PC 端（SPAKE2 密钥）不一致，DATA 消息无法互相解密
+            // 否则安卓端（ECDH 密钥）与 PC 端（SPAKE2 密钥）不一致，DATA 消息无法互相解密。
+            // 派生失败为致命错误：不得静默视为配对成功（否则会以空/错误密钥登记设备，
+            // 后续 DATA 无法解密且两端密钥不一致难以排查）。失败时直接返回，不登记、不标记已配对。
             if (string.IsNullOrEmpty(remoteLtPubKey) || NativeCore.DeriveSharedSecret(remoteUuid, remoteLtPubKey) != 0)
             {
-                logger.LogWarning("配对完成后 ECDH 会话密钥派生失败: {uuid}", remoteUuid);
+                logger.LogError("配对完成后 ECDH 会话密钥派生失败（致命），取消配对: {uuid}", remoteUuid);
+                return;
             }
 
             var existing = PairedDevices.FirstOrDefault(d => d.Id == remoteUuid);
