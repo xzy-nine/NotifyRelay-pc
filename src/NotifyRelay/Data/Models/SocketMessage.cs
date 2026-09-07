@@ -210,35 +210,6 @@ public class FileMetadata
     public required long FileSize { get; set; }
 }
 
-
-
-/// <summary>
-/// UDP广播消息类
-/// 路径: NotifyRelay.Data.Models.UdpBroadcast
-/// 功能: 用于设备发现和广播设备信息，包含设备ID、名称、公钥等
-/// 处理服务: NotifyRelay.Services.DiscoveryService
-/// </summary>
-public class UdpBroadcast : SocketMessage
-{
-    [JsonPropertyName("ipAddresses")]
-    public List<string> IpAddresses { get; set; } = [];
-
-    [JsonPropertyName("port")]
-    public int? Port { get; set; }
-
-    [JsonPropertyName("deviceId")]
-    public required string DeviceId { get; set; }
-
-    [JsonPropertyName("deviceName")]
-    public required string DeviceName { get; set; }
-
-    [JsonPropertyName("publicKey")]
-    public required string PublicKey { get; set; }
-
-    [JsonPropertyName("timestamp")]
-    public long TimeStamp { get; set; }
-}
-
 /// <summary>
 /// 设备铃声模式类
 /// 路径: NotifyRelay.Data.Models.DeviceRingerMode

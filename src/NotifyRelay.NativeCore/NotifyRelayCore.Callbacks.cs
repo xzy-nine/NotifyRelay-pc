@@ -21,11 +21,9 @@ public static partial class NotifyRelayCore
     public delegate void OnLogCb(int level, IntPtr message);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void OnHeartbeatUdpCb(IntPtr uuid, IntPtr nameB64, ushort port, int battery, IntPtr deviceType, IntPtr ip, IntPtr userData);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void OnMdnsDiscoveredCb(IntPtr uuid, IntPtr name, IntPtr ip, ushort port, int battery, IntPtr deviceType, IntPtr userData);
 
+    // ======== Network callbacks ========
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void OnDeviceTimeoutCb(IntPtr uuid, IntPtr userData);
 
@@ -46,8 +44,6 @@ public static partial class NotifyRelayCore
     public static extern void nrc_set_on_data_cb(IntPtr ctx, OnDataCb cb);
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void nrc_set_on_state_query_cb(IntPtr ctx, OnStateQueryCb cb);
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void nrc_set_on_heartbeat_udp_cb(IntPtr ctx, OnHeartbeatUdpCb cb);
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void nrc_set_on_mdns_discovered_cb(IntPtr ctx, OnMdnsDiscoveredCb cb);
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]

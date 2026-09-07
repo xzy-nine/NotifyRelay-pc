@@ -6,7 +6,7 @@ namespace NotifyRelay.Native;
 
 public static partial class NotifyRelayCore
 {
-    // ======== Core start (统一启动 TCP/UDP、心跳、离线检测、发送队列、扫描、重连、mDNS) ========
+    // ======== Core start (统一启动 TCP、心跳、离线检测、发送队列、扫描、重连、mDNS) ========
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     public static extern long nrc_start_core(IntPtr ctx, IntPtr uuid, IntPtr name, int battery, IntPtr deviceType, ushort tcpPort, IntPtr pubKey, ulong heartbeatIntervalMs, long offlineTimeoutSec, ulong offlineCheckIntervalMs, ulong reconnectIntervalSecs, uint reconnectMaxRetries);
 

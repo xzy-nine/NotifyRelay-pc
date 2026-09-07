@@ -439,20 +439,6 @@ public static class NativeCore
         NotifyRelayCore.nrc_set_on_state_query_cb(_ctx, onStateQueryCb);
         _callbackRefs.Add(onStateQueryCb);
 
-        NotifyRelayCore.OnHeartbeatUdpCb onHeartbeatUdpCb = (uuidPtr, namePtr, port, battery, deviceTypePtr, ipPtr, userData) =>
-        {
-            var uuid = Marshal.PtrToStringUTF8(uuidPtr);
-            var name = Marshal.PtrToStringUTF8(namePtr);
-            var deviceType = Marshal.PtrToStringUTF8(deviceTypePtr) ?? "unknown";
-            var ip = Marshal.PtrToStringUTF8(ipPtr);
-            if (uuid == null) return;
-            var hp = HeartbeatProcessor;
-            if (hp == null) return;
-            hp.HandleUdpHeartbeat(uuid, name, port, battery, deviceType, ip);
-        };
-        NotifyRelayCore.nrc_set_on_heartbeat_udp_cb(_ctx, onHeartbeatUdpCb);
-        _callbackRefs.Add(onHeartbeatUdpCb);
-
         NotifyRelayCore.OnMdnsDiscoveredCb onMdnsDiscoveredCb = (uuidPtr, namePtr, ipPtr, port, battery, deviceTypePtr, userData) =>
         {
             var uuid = Marshal.PtrToStringUTF8(uuidPtr);

@@ -45,8 +45,7 @@ public class DiscoveryService(
             // 通过 Rust 内核启动周期性设备广播
             NativeCore.PeriodicBroadcast(1, localDevice.DeviceId, localDevice.DeviceName, signedBattery, "pc");
 
-            // 订阅心跳处理器发现事件和 mDNS 发现事件
-            heartbeatProcessor.DeviceDiscovered += OnDeviceDiscovered;
+            // 订阅 mDNS 发现事件
             heartbeatProcessor.MdnsDeviceDiscovered += OnMdnsDeviceDiscovered;
 
             isInitialized = true;
@@ -85,31 +84,6 @@ public class DiscoveryService(
         }
     }
 
-    private async void OnDeviceDiscovered(string uuid, string? name, ushort port, int battery, string deviceType, string? ip)
-    {
-        if (uuid == localDevice?.DeviceId) return;
-
-        await dispatcher.EnqueueAsync(() =>
-        {
-            if (!isInitialized) return;
-
-            var discovered = new DiscoveredDevice(
-                uuid, ip, name ?? "unknown",
-                DateTimeOffset.UtcNow, DeviceOrigin.UdpBroadcast, port);
-
-            var existing = DiscoveredDevices.FirstOrDefault(d => d.DeviceId == uuid);
-            if (existing is not null)
-            {
-                var index = DiscoveredDevices.IndexOf(existing);
-                DiscoveredDevices[index] = discovered;
-            }
-            else
-            {
-                DiscoveredDevices.Add(discovered);
-            }
-        });
-    }
-
     private async void OnMdnsDeviceDiscovered(string uuid, string? name, string ip, ushort port, string deviceType)
     {
         if (uuid == localDevice?.DeviceId) return;
@@ -140,7 +114,6 @@ public class DiscoveryService(
     public void StopDiscovery()
     {
         NativeCore.PeriodicBroadcast(0);
-        heartbeatProcessor.DeviceDiscovered -= OnDeviceDiscovered;
         heartbeatProcessor.MdnsDeviceDiscovered -= OnMdnsDeviceDiscovered;
 
         try

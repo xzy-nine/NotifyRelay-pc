@@ -119,10 +119,6 @@
                 <desktop2:Rule Direction="out" IPProtocol="TCP" LocalPortMin="5152" LocalPortMax="5169" Profile="all"/>
                 <desktop2:Rule Direction="in" IPProtocol="TCP" LocalPortMin="23333" LocalPortMax="23333" Profile="all"/>
                 <desktop2:Rule Direction="out" IPProtocol="TCP" LocalPortMin="23333" LocalPortMax="23333" Profile="all"/>
-                <desktop2:Rule Direction="in" IPProtocol="UDP" LocalPortMin="23334" LocalPortMax="23334" Profile="all"/>
-                <desktop2:Rule Direction="out" IPProtocol="UDP" LocalPortMin="23334" LocalPortMax="23334" Profile="all"/>
-                <desktop2:Rule Direction="in" IPProtocol="UDP" LocalPortMin="23335" LocalPortMax="23335" Profile="all"/>
-                <desktop2:Rule Direction="out" IPProtocol="UDP" LocalPortMin="23335" LocalPortMax="23335" Profile="all"/>
                 <desktop2:Rule Direction="in" IPProtocol="UDP" LocalPortMin="5353" LocalPortMax="5353" Profile="all"/>
                 <desktop2:Rule Direction="out" IPProtocol="UDP" LocalPortMin="5353" LocalPortMax="5353" Profile="all"/>
             </desktop2:FirewallRules>

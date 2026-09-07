@@ -8,8 +8,6 @@ public class HeartbeatProcessor
     private readonly ILogger _logger;
     private readonly IDeviceManager _deviceManager;
 
-    public event Action<string, string?, ushort, int, string, string?>? DeviceDiscovered;
-
     public event Action<string, string?, string, ushort, string>? MdnsDeviceDiscovered;
 
     public HeartbeatProcessor(
@@ -18,42 +16,6 @@ public class HeartbeatProcessor
     {
         _logger = logger;
         _deviceManager = deviceManager;
-    }
-
-    public void HandleUdpHeartbeat(string uuid, string? name, ushort port, int battery, string deviceType, string? ip)
-    {
-        DeviceDiscovered?.Invoke(uuid, name, port, battery, deviceType, ip);
-
-        var targetDevice = _deviceManager.FindDeviceById(uuid);
-        if (targetDevice == null) return;
-
-        try
-        {
-            if (!string.IsNullOrEmpty(name) && name != "unknown")
-            {
-                App.MainWindow?.DispatcherQueue?.TryEnqueue(() =>
-                {
-                    targetDevice.Name = name;
-                });
-                _deviceManager.SaveDevice(targetDevice);
-            }
-            var absBattery = Math.Abs(battery);
-            var isCharging = battery > 0;
-            // 未知电量（超出 [-100,100]）不更新已显示的电量/充电状态
-            if (absBattery <= 100)
-            {
-                _deviceManager.UpdateDeviceStatus(targetDevice, new DeviceStatus
-                {
-                    BatteryStatus = absBattery,
-                    ChargingStatus = isCharging
-                });
-            }
-            MarkDeviceAlive(targetDevice);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "处理 UDP 心跳包失败");
-        }
     }
 
     public void HandleMdnsDiscovered(string uuid, string? name, string ip, ushort port, int battery, string deviceType)

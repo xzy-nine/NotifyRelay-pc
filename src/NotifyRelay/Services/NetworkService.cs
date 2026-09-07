@@ -46,7 +46,7 @@ public class NetworkService(
             localDeviceId = localDevice.DeviceId;
             localDeviceName = localDevice.DeviceName;
 
-            // 使用 Rust 统一启动接口（TCP/UDP、心跳调度、离线检测、发送队列、已知设备扫描、重连、mDNS）
+            // 使用 Rust 统一启动接口（TCP、心跳调度、离线检测、发送队列、已知设备扫描、重连、mDNS）
             var battery = systemInfoService.GetSystemBatteryLevel();
             var isCharging = systemInfoService.GetSystemChargingStatus();
             var signedBattery = isCharging ? Math.Abs(battery) : -Math.Abs(battery);

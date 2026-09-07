@@ -10,7 +10,7 @@ public interface IDiscoveryService
     ObservableCollection<DiscoveredDevice> DiscoveredDevices { get; }
 
     /// <summary>
-    /// Starts the udp discovery process.
+    /// Starts the discovery process.
     /// </summary>
     Task StartDiscoveryAsync();
 
