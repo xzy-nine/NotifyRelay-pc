@@ -163,17 +163,18 @@ public static class AppLifecycleHelper
         var tcpServerTask = networkService.StartServerAsync();
         var discoveryTask = discoveryService.StartDiscoveryAsync();
         var playbackTask = playbackService.InitializeAsync();
-        var adbTask = adbService.StartAsync();
-        logger.LogInformation("步骤17：4个子任务已创建");
+        logger.LogInformation("步骤17：3个关键子任务已创建");
 
         // 监控各子任务完成状态，便于定位启动卡点
         _ = tcpServerTask.ContinueWith(t => LogSubtaskDone(logger, "TCP服务器", t), TaskScheduler.Default);
         _ = discoveryTask.ContinueWith(t => LogSubtaskDone(logger, "Discovery", t), TaskScheduler.Default);
         _ = playbackTask.ContinueWith(t => LogSubtaskDone(logger, "Playback", t), TaskScheduler.Default);
-        _ = adbTask.ContinueWith(t => LogSubtaskDone(logger, "ADB", t), TaskScheduler.Default);
 
-        await Task.WhenAll(tcpServerTask, discoveryTask, playbackTask, adbTask);
+        await Task.WhenAll(tcpServerTask, discoveryTask, playbackTask);
         logger.LogInformation("步骤17：核心服务启动完成");
+
+        // ADB服务在后台启动，不阻塞主流程（DeviceMonitor.StartAsync 是长生命周期监控任务，不会自然结束）
+        _ = adbService.StartAsync().ContinueWith(t => LogSubtaskDone(logger, "ADB", t), TaskScheduler.Default);
 
         // 步骤17b：Rust 持久化收尾（uuid 已进入核心，触发落盘后清理平台旧存储）
         try
