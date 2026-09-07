@@ -46,7 +46,7 @@ public class NetworkService(
             localDeviceId = localDevice.DeviceId;
             localDeviceName = localDevice.DeviceName;
 
-            // 使用 Rust 统一启动接口（TCP、心跳调度、离线检测、发送队列、已知设备扫描、重连、mDNS）
+            // 使用 Rust 统一启动接口（TCP、心跳调度、离线检测、发送队列、已知设备扫描、重连）
             var battery = systemInfoService.GetSystemBatteryLevel();
             var isCharging = systemInfoService.GetSystemChargingStatus();
             var signedBattery = isCharging ? Math.Abs(battery) : -Math.Abs(battery);
@@ -427,7 +427,7 @@ public class NetworkService(
     }
 
     /// <summary>
-    /// 本机电量/充电状态变化：更新调度器广播参数（内部联动 mDNS 广告 TXT）
+    /// 本机电量/充电状态变化：更新调度器广播参数（名称/电量/设备类型）
     /// </summary>
     private void OnBatteryChanged(object? sender, EventArgs e)
     {

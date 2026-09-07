@@ -439,21 +439,20 @@ public static class NativeCore
         NotifyRelayCore.nrc_set_on_state_query_cb(_ctx, onStateQueryCb);
         _callbackRefs.Add(onStateQueryCb);
 
-        NotifyRelayCore.OnMdnsDiscoveredCb onMdnsDiscoveredCb = (uuidPtr, namePtr, ipPtr, port, battery, deviceTypePtr, userData) =>
+        // ---- on_device_discovered（TCP 扫描发现）----
+        // 设备状态（名称解码、状态登记、可见性）全部由 Rust core 负责，
+        // 此处不解析业务字段，仅通知平台端重新拉取设备快照刷新 UI。
+        NotifyRelayCore.OnDeviceDiscoveredCb onDeviceDiscoveredCb = (uuidPtr, namePtr, port, battery, deviceTypePtr, ipPtr, userData) =>
         {
             var uuid = Marshal.PtrToStringUTF8(uuidPtr);
-            var name = Marshal.PtrToStringUTF8(namePtr);
-            var ip = Marshal.PtrToStringUTF8(ipPtr);
-            var deviceType = Marshal.PtrToStringUTF8(deviceTypePtr) ?? "unknown";
-            if (uuid == null || ip == null) return;
-            System.Diagnostics.Debug.WriteLine($"[CoreCb] 发现设备: {uuid}, ip={ip}, 名称={name}, 端口={port}, 电量={battery}");
+            var ip = Marshal.PtrToStringUTF8(ipPtr) ?? "";
+            if (uuid == null) return;
+            System.Diagnostics.Debug.WriteLine($"[CoreCb] 扫描发现设备: {uuid}, ip={ip}, 端口={port}, 电量={battery}");
 
-            var hp = HeartbeatProcessor;
-            if (hp == null) return;
-            hp.HandleMdnsDiscovered(uuid, name, ip, port, battery, deviceType);
+            HeartbeatProcessor?.NotifyDeviceListChanged();
         };
-        NotifyRelayCore.nrc_set_on_mdns_discovered_cb(_ctx, onMdnsDiscoveredCb);
-        _callbackRefs.Add(onMdnsDiscoveredCb);
+        NotifyRelayCore.nrc_set_on_device_discovered_cb(_ctx, onDeviceDiscoveredCb);
+        _callbackRefs.Add(onDeviceDiscoveredCb);
 
         NotifyRelayCore.OnDeviceTimeoutCb onDeviceTimeoutCb = (uuidPtr, userData) =>
         {
@@ -464,6 +463,9 @@ public static class NativeCore
             {
                 System.Diagnostics.Debug.WriteLine($"[CoreCb] 设备已离线: {uuid}");
             }
+            // 设备离线同样由 core 快照反映，通知平台端刷新列表
+            HeartbeatProcessor?.NotifyDeviceListChanged();
+
             var dispatcher = App.MainWindow?.DispatcherQueue;
             if (dispatcher != null && !dispatcher.HasThreadAccess)
             {
@@ -516,7 +518,9 @@ public static class NativeCore
     }
 
     // ======== Device state snapshot ========
-    public static string? GetDeviceList(long authedTimeoutMs = 12000, long unauthedTimeoutMs = 5000)
+    // 传 0 表示使用 Rust core 内建阈值（已认证 12s / 未认证 20s）：
+    // 在线判定与可见性完全归 core，两端平台保持一致
+    public static string? GetDeviceList(long authedTimeoutMs = 0, long unauthedTimeoutMs = 0)
     {
         return NotifyRelayCore.Safe.GetDeviceList(_ctx, authedTimeoutMs, unauthedTimeoutMs);
     }
@@ -610,17 +614,6 @@ public static class NativeCore
     public static void RemoveKnownDevice(string uuid)
     {
         NotifyRelayCore.Safe.RemoveKnownDevice(_ctx, uuid);
-    }
-
-    // ======== mDNS ========
-    public static void StopMdnsAdvertiser()
-    {
-        NotifyRelayCore.Safe.StopMdnsAdvertiser(_ctx);
-    }
-
-    public static void StopMdnsDiscovery()
-    {
-        NotifyRelayCore.Safe.StopMdnsDiscovery(_ctx);
     }
 
     public static int AudioStart(string direction, int sampleRate, int channels, string remoteUuid)
