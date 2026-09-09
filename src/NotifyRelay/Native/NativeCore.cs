@@ -357,6 +357,17 @@ public static class NativeCore
                                 });
                                 DeviceManager?.SaveDevice(device);
                             }
+
+                            // 电量接线：intValue 为带符号电量（正=充电 / 负=放电）。
+                            // |值|>100 为未知哨兵（如 -101），跳过以保留上次有效状态。
+                            if (Math.Abs(intValue) <= 100)
+                            {
+                                DeviceManager?.UpdateDeviceStatus(device, new DeviceStatus
+                                {
+                                    BatteryStatus = Math.Abs(intValue),
+                                    ChargingStatus = intValue >= 0,
+                                });
+                            }
                         }
                     }
                     break;

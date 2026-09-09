@@ -88,28 +88,17 @@ public class DeviceInfo : SocketMessage
 /// <summary>
 /// 设备状态类
 /// 路径: NotifyRelay.Data.Models.DeviceStatus
-/// 功能: 包含设备的实时状态信息，如电量、充电状态、WiFi状态等
-/// 处理服务: NotifyRelay.Services.MessageHandler.HandleMessageAsync → DeviceManager.UpdateDeviceStatus
+/// 功能: 保存对端设备的实时电量/充电状态。
+/// 来源: PC 端 NativeCore 的 HEARTBEAT_TCP 心跳回调（Rust 带符号电量），纯内部运行时模型，不经 JSON 反序列化。
+/// 处理服务: NotifyRelay.Services.Native.NativeCore (HEARTBEAT_TCP) → DeviceManager.UpdateDeviceStatus
 /// </summary>
 public class DeviceStatus : SocketMessage
 {
-    [JsonPropertyName("batteryStatus")]
+    /// <summary>电量百分比 0-100（心跳带符号电量的绝对值）</summary>
     public int BatteryStatus { get; set; }
 
-    [JsonPropertyName("chargingStatus")]
+    /// <summary>是否正在充电（由心跳带符号电量 intValue >= 0 决定）</summary>
     public bool ChargingStatus { get; set; }
-
-    [JsonPropertyName("wifiStatus")]
-    public bool WifiStatus { get; set; }
-
-    [JsonPropertyName("bluetoothStatus")]
-    public bool BluetoothStatus { get; set; }
-
-    [JsonPropertyName("isDndEnabled")]
-    public bool IsDndEnabled { get; set; }
-
-    [JsonPropertyName("ringerMode")]
-    public int RingerMode { get; set; }
 }
 
 
