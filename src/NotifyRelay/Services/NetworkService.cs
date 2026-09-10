@@ -250,7 +250,11 @@ public class NetworkService(
                     var localDevice = await deviceManager.GetLocalDeviceAsync();
                     ltPubKey = Encoding.UTF8.GetString(localDevice.PublicKey ?? Array.Empty<byte>());
                 }
-                NativeCore.SendPairingResp(localDeviceId ?? string.Empty, ltPubKey, pairingCode, remoteIp, systemInfoService.GetSystemBatteryLevel(), "pc");
+                // 与启动/心跳/扫描路径一致：上报本机真实带符号电量（正=充电，负=放电）
+                var localBattery = systemInfoService.GetSystemBatteryLevel();
+                var localIsCharging = systemInfoService.GetSystemChargingStatus();
+                var signedLocalBattery = localIsCharging ? Math.Abs(localBattery) : -Math.Abs(localBattery);
+                NativeCore.SendPairingResp(localDeviceId ?? string.Empty, ltPubKey, pairingCode, remoteIp, signedLocalBattery, "pc");
                 logger.LogInformation($"已发送 PAIRING_RESP: {remoteUuid}");
             }
             catch (Exception ex)
