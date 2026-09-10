@@ -458,7 +458,8 @@ public static class NativeCore
             var uuid = Marshal.PtrToStringUTF8(uuidPtr);
             var ip = Marshal.PtrToStringUTF8(ipPtr) ?? "";
             if (uuid == null) return;
-            System.Diagnostics.Debug.WriteLine($"[CoreCb] 扫描发现设备: {uuid}, ip={ip}, 端口={port}, 电量={battery}");
+            // 调试日志（保留代码，需要排查发现流程时再放开）
+            //System.Diagnostics.Debug.WriteLine($"[CoreCb] 扫描发现设备: {uuid}, ip={ip}, 端口={port}, 电量={battery}");
 
             HeartbeatProcessor?.NotifyDeviceListChanged();
         };

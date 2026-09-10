@@ -37,8 +37,11 @@ public sealed class HeartRateBleService : IDisposable
     private static readonly Guid HeartRateServiceUuid = GattServiceUuids.HeartRate;                 // 0000180D-...
     private static readonly Guid HeartRateMeasurementUuid = GattCharacteristicUuids.HeartRateMeasurement; // 00002A37-...
 
-    /// <summary>意外断线后自动重连的重试间隔。</summary>
-    private static readonly TimeSpan ReconnectInterval = TimeSpan.FromSeconds(3);
+    /// <summary>意外断线后自动重连的首次重试间隔。</summary>
+    private static readonly TimeSpan ReconnectInitialInterval = TimeSpan.FromSeconds(1);
+
+    /// <summary>自动重连指数退避的间隔上限（长时间连不上时降为每分钟一次）。</summary>
+    private static readonly TimeSpan ReconnectMaxInterval = TimeSpan.FromSeconds(60);
 
     private readonly ILogger<HeartRateBleService> _logger;
     private readonly IGeneralSettingsService _settings;
@@ -297,19 +300,21 @@ public sealed class HeartRateBleService : IDisposable
         _ = Task.Run(() => ReconnectLoopAsync(address, cts.Token), CancellationToken.None);
     }
 
-    /// <summary>后台重连循环：固定间隔重试，直到连上或被取消。</summary>
+    /// <summary>后台重连循环：指数退避重试（首次 1s、每次翻倍、上限 60s），直到连上或被取消。</summary>
     private async Task ReconnectLoopAsync(ulong address, CancellationToken ct)
     {
         try
         {
+            var delay = ReconnectInitialInterval;
             while (!ct.IsCancellationRequested)
             {
-                await Task.Delay(ReconnectInterval, ct);
+                await Task.Delay(delay, ct);
                 _logger.LogInformation("心率 BLE 自动重连尝试 {Address:X12}", address);
                 bool ok = await ConnectCoreAsync(address, ct);
                 if (ok) return; // ConnectCoreAsync 成功时已置 Connected
                 if (ct.IsCancellationRequested) return;
-                // 失败保持 Reconnecting 状态，等待下一轮
+                // 失败保持 Reconnecting 状态，等待下一轮；间隔翻倍并封顶
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, ReconnectMaxInterval.Ticks));
             }
         }
         catch (OperationCanceledException)
