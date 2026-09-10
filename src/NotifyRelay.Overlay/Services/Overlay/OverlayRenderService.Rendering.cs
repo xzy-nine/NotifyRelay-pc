@@ -511,7 +511,12 @@ public partial class OverlayRenderService
         var text = ResolveBText(bComp, state);
         // 等宽数字（BDigitInfoData）绘制用 Consolas，测量必须用同一字体，否则宽度差导致换行
         string fontFamily = bComp is BDigitInfoData ? "Consolas" : "Microsoft YaHei";
-        float textW = text != null ? MeasureTextWidth(text, fontFamily, DWriteFontWeight.Normal, 12) : 0;
+        // 与 DrawBComponent 保持一致：imageText2 / textInfo 用 Bold 绘制；测量若用 Normal 会偏窄，
+        // 导致“测得宽度=可用宽度”时仍被判为溢出，从而对 6 位验证码等短文本误触发滚动
+        var weight = bComp is BImageTextData { Kind: "imageText2" or "textInfo" }
+            ? DWriteFontWeight.Bold
+            : DWriteFontWeight.Normal;
+        float textW = text != null ? MeasureTextWidth(text, fontFamily, weight, 12) : 0;
 
         return bComp switch
         {
