@@ -55,17 +55,6 @@
         <Content Include="ffmpeg\**" Condition="Exists('ffmpeg\ffmpeg.exe')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <!-- 罗技电池 FFI DLL (logi-battery 子模块 Rust 产物)：开发期优先使用 ffi_test/bin 预构建版本；若 Rust 已构建则使用 target/release -->
-        <Content Condition="Exists('..\NotifyRelay.Overlay\logi-battery\target\release\logi_battery.dll')"
-                 Include="..\NotifyRelay.Overlay\logi-battery\target\release\logi_battery.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>logi_battery.dll</Link>
-        </Content>
-        <Content Condition="!Exists('..\NotifyRelay.Overlay\logi-battery\target\release\logi_battery.dll') And Exists('..\NotifyRelay.Overlay\logi-battery\ffi_test\bin\logi_battery.dll')"
-                 Include="..\NotifyRelay.Overlay\logi-battery\ffi_test\bin\logi_battery.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>logi_battery.dll</Link>
-        </Content>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\NotifyRelay.NativeCore\NotifyRelay.NativeCore.csproj" />
@@ -127,5 +116,17 @@
         </PropertyGroup>
         <Move Condition="Exists('$(RustCoreOutDll)')" SourceFiles="$(RustCoreOutDll)" DestinationFolder="$(OutDir)" />
         <Copy Condition="Exists('$(OutDir)AppX')" SourceFiles="$(OutDir)notify_relay_core.dll" DestinationFolder="$(OutDir)AppX" SkipUnchangedFiles="false" />
+    </Target>
+    <!--
+        罗技电池 FFI DLL 强制同步（Move 模式，对齐 SyncRustCoreDll）：
+        NotifyRelay.Overlay 的 BuildLogiBattery 已把最新 logi_battery.dll Move 到其 OutDir；
+        此处再从子项目 OutDir Move 到主项目输出目录。AppX 打包目录为第二目标（Move 无法多目标）。
+    -->
+    <Target Name="SyncLogiBatteryDll" AfterTargets="Build">
+        <PropertyGroup>
+            <LogiBatteryOutDll>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\NotifyRelay.Overlay\bin\$(Platform)\$(Configuration)\$(TargetFramework)\logi_battery.dll'))</LogiBatteryOutDll>
+        </PropertyGroup>
+        <Move Condition="Exists('$(LogiBatteryOutDll)')" SourceFiles="$(LogiBatteryOutDll)" DestinationFolder="$(OutDir)" />
+        <Copy Condition="Exists('$(OutDir)AppX') And Exists('$(OutDir)logi_battery.dll')" SourceFiles="$(OutDir)logi_battery.dll" DestinationFolder="$(OutDir)AppX" SkipUnchangedFiles="false" />
     </Target>
 </Project>

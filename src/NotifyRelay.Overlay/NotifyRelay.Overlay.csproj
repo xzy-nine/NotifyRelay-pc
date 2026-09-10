@@ -10,4 +10,19 @@
         <PackageReference Include="Vortice.Direct2D1" />
         <PackageReference Include="Vortice.Mathematics" />
     </ItemGroup>
+    <!--
+        logi-battery Rust 子模块构建（对齐 NotifyRelay.NativeCore 的 BuildRust）。
+        产出 logi_battery.dll 后 Move 到本项目 OutDir，由主项目 SyncLogiBatteryDll 再同步到应用输出目录。
+    -->
+    <Target Name="BuildLogiBattery" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+        <PropertyGroup>
+            <LogiBatteryProjectDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)logi-battery'))</LogiBatteryProjectDir>
+            <LogiBatteryDllPath>$([MSBuild]::NormalizePath('$(LogiBatteryProjectDir)target\release\logi_battery.dll'))</LogiBatteryDllPath>
+        </PropertyGroup>
+        <Message Text="构建 Rust 原生库 logi-battery: $(LogiBatteryProjectDir)" Importance="high" />
+        <Exec Command="&quot;$(UserProfile)\.cargo\bin\cargo.exe&quot; build --release --manifest-path $(LogiBatteryProjectDir)Cargo.toml"
+              WorkingDirectory="$(LogiBatteryProjectDir)" StandardOutputImportance="high" />
+        <!-- 用 Move 而非 Copy：移走 release 产物后，下次构建 cargo 必重新生成，保证每次构建都产出最新 DLL -->
+        <Move SourceFiles="$(LogiBatteryDllPath)" DestinationFolder="$(OutDir)" />
+    </Target>
 </Project>
